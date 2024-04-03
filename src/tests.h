@@ -65,5 +65,10 @@ namespace FEM2A {
             return true;
         }
 
+        bool test_element_mapping(/*const Mesh& M, */bool border, int i )
+        {
+            std::cout << "coucou" << std::endl;
+            return true;
+        }
     }
 }

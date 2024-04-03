@@ -135,7 +135,19 @@ namespace FEM2A {
         std::cout << "[ElementMapping] constructor for element " << i << " ";
         if ( border ) std::cout << "(border)";
         std::cout << '\n';
-        // TODO
+        border_ = border;
+        std::cout << border_ << std::endl;
+        /* on remplit les attributs (constructeur !) avec les indexes locaux+globaux puis les coord*/
+        // trouver le nombre de points
+        // reshape vertices_ pour les contenir
+        // le remplir avec les méthodes de mesh : avoir les indices locaux(j) et globaux(i)
+        /*if ( border ) {
+            for 
+            element = M.get_edge_vertex
+        }
+        else {
+            element = M.get_triangle_vertex
+        }*/
     }
 
     vertex ElementMapping::transform( vertex x_r ) const

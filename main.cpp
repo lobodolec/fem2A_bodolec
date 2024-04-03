@@ -31,12 +31,14 @@ void run_tests()
     const bool t_opennl = false;
     const bool t_lmesh = false;
     const bool t_io = false;
-    const bool t_quad = true;
+    const bool t_quad = false;
+    const bool t_eltmap = true;
 
     if( t_opennl ) test_opennl();
     if( t_lmesh ) Tests::test_load_mesh();
     if( t_io ) Tests::test_load_save_mesh();
-    if( t_quad ) Tests::test_quadrature(0,false);
+    if( t_quad ) Tests::test_quadrature( 0, false );
+    if( t_eltmap ) Tests::test_element_mapping( /*"data/square.mesh",*/ false, 4 );
 }
 
 void run_simu()
