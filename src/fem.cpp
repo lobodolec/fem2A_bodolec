@@ -182,16 +182,37 @@ namespace FEM2A {
     DenseMatrix ElementMapping::jacobian_matrix( vertex x_r ) const
     {
         std::cout << "[ElementMapping] compute jacobian matrix" << '\n';
-        // TODO
+        
         DenseMatrix J ;
+        if ( border_ ) {
+            J.set_size(2, 1);
+            J.set(0, 0, - vertices_[0].x + vertices_[1].x);
+            J.set(1, 0, - vertices_[0].y + vertices_[1].y);
+
+        }
+        else {
+       	    J.set_size(2, 2);
+            J.set(0, 0, - vertices_[0].x + vertices_[1].x);
+            J.set(1, 0, - vertices_[0].y + vertices_[1].y);
+            J.set(0, 1, - vertices_[0].x + vertices_[2].x);
+            J.set(1, 1, - vertices_[0].y + vertices_[2].y);
+        }
         return J ;
     }
 
     double ElementMapping::jacobian( vertex x_r ) const
     {
         std::cout << "[ElementMapping] compute jacobian determinant" << '\n';
-        // TODO
-        return 0. ;
+        DenseMatrix J = jacobian_matrix( x_r );
+        double det_jac;
+        if ( border_ ) {
+            double JTJ = J.get(0,0)*J.get(0,0) + J.get(1,0)*J.get(1,0);
+            det_jac = sqrt(JTJ);
+        }
+        else {
+            det_jac = J.det_2x2();
+        }     
+        return det_jac;
     }
 
     /****************************************************************/
@@ -201,40 +222,90 @@ namespace FEM2A {
         : dim_( dim ), order_( order )
     {
         std::cout << "[ShapeFunctions] constructor in dimension " << dim << '\n';
-        // TODO (elle concerne les fonctions d'interpolation!)
-        /*if ( dim == 1 ){
-            
-            ;}
-        else {
-            
-            ;}    */    
+        // (elle concerne les fonctions d'interpolation!) 
+        bool shape_func_constr = true;
+        if ( dim != 1 && dim != 2 ) {
+            std::cout << "ShapeFunctions is only implemented in 1D or 2D" << std::endl;
+            shape_func_constr = false;
+        }
+        if ( order != 1 ) {
+            std::cout << "Only order-1 functoons are implemented" << std::endl;
+            shape_func_constr = false;
+        assert (shape_func_constr);
+        }
     }
 
     int ShapeFunctions::nb_functions() const
     {
         std::cout << "[ShapeFunctions] number of functions" << '\n';
-        // TODO (en cours)
-        /*if ( dim == 1 ){
-            
-            ;}
-        else {
-            
-            ;} */
-        return 0 ;
+        return dim_ + 1 ;
     }
 
     double ShapeFunctions::evaluate( int i, vertex x_r ) const
     {
         std::cout << "[ShapeFunctions] evaluate shape function " << i << '\n';
-        // TODO
+        // qu'apporte un switch case par rapport à un if ici ? 
+        // juste plus simple à lire et à écrire
+        if ( dim_ == 1 ) {
+            switch (i) {
+            	case 0 :
+            	    return 1 - x_r.x ;
+  
+                case 1 :
+            	    return x_r.x ;
+            }
+        }
+        else {
+            switch (i) {
+                case 0 :
+                    return 1 - x_r.x - x_r.y ;
+                case 1 :
+                    return x_r.x ;
+                case 2 :
+                    return x_r.y ;
+            }
+        }
         return 0. ; // should not be reached
     }
 
     vec2 ShapeFunctions::evaluate_grad( int i, vertex x_r ) const
     {
         std::cout << "[ShapeFunctions] evaluate gradient shape function " << i << '\n';
-        // TODO
-        vec2 g ;
+        // quel intérêt d'utiliser le type vec2 plutot que la structure vertex, dans DenseMatrix ?
+        // le gradient de phi dans l'espace réel (g) est le gradient de phi^ dans l'espace de  	référence (g_ref), multiplié par la matrice jacobienne            
+        vec2 g;
+        vec2 g_ref;
+        DenseMatrix J = jacobian_matrix( x_r );
+
+        if ( dim_ == 1 ) {
+            switch (i) {
+            	case 0 :
+            	    g_ref.x = -1 ;
+            	    g_ref.y = 0 ;
+            	    g = J.mult_2x2_2(g_ref);
+                case 1 :
+                    g_ref.x = 1 ;
+            	    g_ref.y = 0
+            	    g = J.mult_2x2_2(g_ref);
+            }
+        }
+        else {
+            switch (i) {
+                case 0 :
+                    g_ref.x = -1 ;
+            	    g_ref.y = -1 ;
+            	    g = J.mult_2x2_2(g_ref);
+                case 1 :
+                    g_ref.x = 1 ;
+            	    g_ref.y = 0 ;
+            	    g = J.mult_2x2_2(g_ref);
+                case 2 :
+                    g_ref.x = 0 ;
+            	    g_ref.y = 1 ;
+            	    g = J.mult_2x2_2(g_ref);
+            }
+        }
+        
         return g ;
     }
 
@@ -249,7 +320,9 @@ namespace FEM2A {
         DenseMatrix& Ke )
     {
         std::cout << "compute elementary matrix" << '\n';
-        // TODO
+        // TODO (utiliser les méthodes de la classe DenseMatrix; 
+        // double (*coefficient)(vertex) est un pointeur de fonction : help.md dans la doc
+        //pour un produit scalaire avec des vecteurs : dot (.,.)
     }
 
     void local_to_global_matrix(

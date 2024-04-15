@@ -74,8 +74,59 @@ namespace FEM2A {
         }
         
         bool test_transform()
+        {	
+            Mesh mesh;
+            mesh.load("data/square.mesh");
+            ElementMapping map = ElementMapping(mesh, false, 4);
+            vertex point ;
+            point.x = 0.2;
+            point.y = 0.4;
+            std::cout << map.transform(point).x << " " 
+            << map.transform(point).y << std::endl;
+            return true;
+        }
+        
+        bool test_jacobian_matrix()
         {
-            std::cout << "hi" << std::endl;
+            Mesh mesh;
+            mesh.load("data/square.mesh");
+            ElementMapping map = ElementMapping(mesh, false, 4);
+            vertex point ;
+            point.x = 0.2;
+            point.y = 0.4;
+            DenseMatrix mat = map.jacobian_matrix(point);
+            mat.print();
+            return true;
+        }
+        
+        bool test_det_jacobian()
+        {
+            Mesh mesh;
+            mesh.load("data/square.mesh");
+            ElementMapping map = ElementMapping(mesh, true, 4);
+            vertex point ;
+            point.x = 0.2;
+            point.y = 0.4;
+            std::cout << map.jacobian(point) << std::endl;
+            return true;
+        }
+        
+        bool test_shape_functions()
+        {
+            vertex point ;
+            point.x = 0.2;
+            point.y = 0.4;
+            
+            ShapeFunctions shapefunc1 = ShapeFunctions(1, 1);
+            std::cout << shapefunc1.nb_functions() << std::endl;
+            std::cout << shapefunc1.evaluate(1, point) << std::endl;
+            std::cout << shapefunc1.evaluate_grad(1, point) << std::endl;
+            
+            ShapeFunctions shapefunc2 = ShapeFunctions(2, 1);
+            std::cout << shapefunc2.nb_functions() << std::endl;
+            std::cout << shapefunc2.evaluate(2, point) << std::endl;
+            std::cout << shapefunc1.evaluate_grad(2, point) << std::endl;
+            
             return true;
         }
     }

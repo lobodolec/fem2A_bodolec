@@ -33,7 +33,10 @@ void run_tests()
     const bool t_io = false;
     const bool t_quad = false;
     const bool t_eltmap = false;
-    const bool t_transf = true;
+    const bool t_transf = false;
+    const bool t_jac = false;
+    const bool t_detjac = false;
+    const bool t_shapef = true;
 
     if( t_opennl ) test_opennl();
     if( t_lmesh ) Tests::test_load_mesh();
@@ -41,6 +44,9 @@ void run_tests()
     if( t_quad ) Tests::test_quadrature( 0, false );
     if( t_eltmap ) Tests::test_element_mapping( false, 4 );
     if( t_transf ) Tests::test_transform();
+    if( t_jac ) Tests::test_jacobian_matrix();
+    if( t_detjac ) Tests::test_det_jacobian();
+    if( t_shapef ) Tests::test_shape_functions();
 }
 
 void run_simu()

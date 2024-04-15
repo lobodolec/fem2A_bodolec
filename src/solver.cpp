@@ -190,7 +190,7 @@ namespace FEM2A {
     }
 
     void DenseMatrix::print() const 
-    {
+    {	
         std::cout << std::setprecision(3);
         for(int i = 0; i < height_; ++i) {
             for(int j = 0; j < width_; ++j) {
