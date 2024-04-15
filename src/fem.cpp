@@ -276,6 +276,7 @@ namespace FEM2A {
         vec2 g;
         vec2 g_ref;
         DenseMatrix J = jacobian_matrix( x_r );
+        // PB : jacobian_matrix est une méthode de ElementMaillage, donc on doit introduire un mapping !, mais aucun n'est passé en argument : comment savoir quels paramètres choisir ?
 
         if ( dim_ == 1 ) {
             switch (i) {
@@ -285,7 +286,7 @@ namespace FEM2A {
             	    g = J.mult_2x2_2(g_ref);
                 case 1 :
                     g_ref.x = 1 ;
-            	    g_ref.y = 0
+            	    g_ref.y = 0 ;
             	    g = J.mult_2x2_2(g_ref);
             }
         }
