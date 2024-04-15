@@ -139,29 +139,43 @@ namespace FEM2A {
         /* on remplit les attributs (constructeur !) avec les indexes locaux+globaux puis les coord*/
         // trouver le nombre de points
         // reshape vertices_ pour les contenir
-        // le remplir avec les méthodes de mesh : avoir les indices locaux(j) et globaux(i)
+        // le remplir avec les méthodes de mesh : avoir les indices locaux(calcul) et globaux(i n'est pas l'indice GLOBAL mais l'indice de l'élément entier !)
         
         if ( border ) {
-            for ( int i_local = 0; i_local<2; ++i_local) {
-            vertices_.pushback(M.get_edge_vertex(i, i_local))
-            ;}
-            for ( int i_local = 0; i_local<2; ++i_local) {
-            std::cout << vertices_[i_local].x << " " << vertices_[v].y << std::endl
-            ;}
+            for (int i_local = 0; i_local<2; ++i_local) {
+                vertices_.push_back(M.get_edge_vertex(i, i_local));
+            }
+            /* for (int i_local = 0; i_local<2; ++i_local) {
+                std::cout << vertices_[i_local].x << " " << vertices_[i_local].y << std::endl
+                ;} */
         }
         else {
-            int i_triangle = floor( i/3 )
-            int i_local = i/3 - i_triangle
-            element = M.get_triangle_vertex(i_triangle, i_local
-        }
-        return element
+            for (int i_local = 0; i_local<3; ++i_local) {
+                vertices_.push_back(M.get_triangle_vertex(i, i_local));
+            }
+            /* for (int i_local = 0; i_local<3; ++i_local) {
+                std::cout << vertices_[i_local].x << " " << vertices_[i_local].y << std::endl
+                ;}*/
+        } 
     }
 
     vertex ElementMapping::transform( vertex x_r ) const
     {
         std::cout << "[ElementMapping] transform reference to world space" << '\n';
-        // TODO
+        
+        /* les coordonnées de références sont dans l'attribut vertices_
+        on applique les fonctions phi^ */
         vertex r ;
+        if ( border_ ) {
+            r.x = (1-x_r.x) * vertices_[0].x + x_r.x * vertices_[1].x;
+            r.y = (1-x_r.x) * vertices_[0].y + x_r.x * vertices_[1].y;
+        }
+        else {
+            r.x = (1-x_r.x-x_r.y) * vertices_[0].x + x_r.x 
+                  * vertices_[1].x + x_r.y * vertices_[2].x ;
+  	    r.y = (1-x_r.x-x_r.y) * vertices_[0].y + x_r.x 
+  	          * vertices_[1].y + x_r.y * vertices_[2].y ;
+  	}
         return r ;
     }
 
@@ -187,13 +201,25 @@ namespace FEM2A {
         : dim_( dim ), order_( order )
     {
         std::cout << "[ShapeFunctions] constructor in dimension " << dim << '\n';
-        // TODO
+        // TODO (elle concerne les fonctions d'interpolation!)
+        /*if ( dim == 1 ){
+            
+            ;}
+        else {
+            
+            ;}    */    
     }
 
     int ShapeFunctions::nb_functions() const
     {
         std::cout << "[ShapeFunctions] number of functions" << '\n';
-        // TODO
+        // TODO (en cours)
+        /*if ( dim == 1 ){
+            
+            ;}
+        else {
+            
+            ;} */
         return 0 ;
     }
 
