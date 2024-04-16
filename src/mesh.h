@@ -13,7 +13,7 @@ namespace FEM2A {
     typedef vertex vec2 ;
 
     class Mesh {
-        public:
+        public: 
             Mesh() ;
 
             int nb_vertices() const ;

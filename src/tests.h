@@ -120,14 +120,55 @@ namespace FEM2A {
             ShapeFunctions shapefunc1 = ShapeFunctions(1, 1);
             std::cout << shapefunc1.nb_functions() << std::endl;
             std::cout << shapefunc1.evaluate(1, point) << std::endl;
-            std::cout << shapefunc1.evaluate_grad(1, point) << std::endl;
+            vec2 g1 = shapefunc1.evaluate_grad(0, point);
+            std::cout << g1.x << " " << g1.y << std::endl;
             
             ShapeFunctions shapefunc2 = ShapeFunctions(2, 1);
             std::cout << shapefunc2.nb_functions() << std::endl;
             std::cout << shapefunc2.evaluate(2, point) << std::endl;
-            std::cout << shapefunc1.evaluate_grad(2, point) << std::endl;
+            vec2 g2 = shapefunc2.evaluate_grad(2, point);
+            std::cout << g2.x << " " << g2.y << std::endl;
             
             return true;
         }
+        
+        double permeabilite ( vertex x_r )
+        {
+            double k = 1;
+            return k;
+        }
+        
+        bool test_K()
+        {
+            Mesh mesh;
+            mesh.load("data/square.mesh");
+            ElementMapping map = ElementMapping(mesh, false, 4);
+            ShapeFunctions ref_func(2, 1);
+            Quadrature quad = Quadrature::get_quadrature(2, false); // tester avec 0 et 2
+            
+            DenseMatrix Ke;
+            assemble_elementary_matrix( map, ref_func, quad, permeabilite, Ke );
+            Ke.print(); 
+            
+            SparseMatrix K = SparseMatrix( mesh.nb_vertices() );
+            local_to_global_matrix(mesh, 4, Ke, K);
+            K.print();
+            
+            return true;
+        }
+        
+        bool test_apply_dirichlet_boundary_conditions()
+        {
+            Mesh mesh;
+            mesh.load("data/square.mesh");
+            std::vector< bool >& attribute_is_dirichlet const
+            attr_is_dir
+            apply_dirichlet_boundary_conditions(mesh, 
+        const std::vector< bool >& attribute_is_dirichlet, /* size: nb of attributes */
+        const std::vector< double >& values, /* size: nb of DOFs */
+        SparseMatrix& K,
+        std::vector< double >& F 
+        }
+        
     }
 }

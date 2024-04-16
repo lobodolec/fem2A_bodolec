@@ -132,7 +132,6 @@ namespace FEM2A {
     ElementMapping::ElementMapping( const Mesh& M, bool border, int i )
         : border_( border )
     {
-        std::cout << "[ElementMapping] constructor for element " << i << " ";
         if ( border ) std::cout << "(border)";
         std::cout << '\n';
 
@@ -145,24 +144,16 @@ namespace FEM2A {
             for (int i_local = 0; i_local<2; ++i_local) {
                 vertices_.push_back(M.get_edge_vertex(i, i_local));
             }
-            /* for (int i_local = 0; i_local<2; ++i_local) {
-                std::cout << vertices_[i_local].x << " " << vertices_[i_local].y << std::endl
-                ;} */
         }
         else {
             for (int i_local = 0; i_local<3; ++i_local) {
                 vertices_.push_back(M.get_triangle_vertex(i, i_local));
             }
-            /* for (int i_local = 0; i_local<3; ++i_local) {
-                std::cout << vertices_[i_local].x << " " << vertices_[i_local].y << std::endl
-                ;}*/
         } 
     }
 
     vertex ElementMapping::transform( vertex x_r ) const
-    {
-        std::cout << "[ElementMapping] transform reference to world space" << '\n';
-        
+    {        
         /* les coordonnées de références sont dans l'attribut vertices_
         on applique les fonctions phi^ */
         vertex r ;
@@ -180,9 +171,7 @@ namespace FEM2A {
     }
 
     DenseMatrix ElementMapping::jacobian_matrix( vertex x_r ) const
-    {
-        std::cout << "[ElementMapping] compute jacobian matrix" << '\n';
-        
+    {        
         DenseMatrix J ;
         if ( border_ ) {
             J.set_size(2, 1);
@@ -202,7 +191,6 @@ namespace FEM2A {
 
     double ElementMapping::jacobian( vertex x_r ) const
     {
-        std::cout << "[ElementMapping] compute jacobian determinant" << '\n';
         DenseMatrix J = jacobian_matrix( x_r );
         double det_jac;
         if ( border_ ) {
@@ -221,7 +209,6 @@ namespace FEM2A {
     ShapeFunctions::ShapeFunctions( int dim, int order )
         : dim_( dim ), order_( order )
     {
-        std::cout << "[ShapeFunctions] constructor in dimension " << dim << '\n';
         // (elle concerne les fonctions d'interpolation!) 
         bool shape_func_constr = true;
         if ( dim != 1 && dim != 2 ) {
@@ -237,13 +224,11 @@ namespace FEM2A {
 
     int ShapeFunctions::nb_functions() const
     {
-        std::cout << "[ShapeFunctions] number of functions" << '\n';
         return dim_ + 1 ;
     }
 
     double ShapeFunctions::evaluate( int i, vertex x_r ) const
     {
-        std::cout << "[ShapeFunctions] evaluate shape function " << i << '\n';
         // qu'apporte un switch case par rapport à un if ici ? 
         // juste plus simple à lire et à écrire
         if ( dim_ == 1 ) {
@@ -270,40 +255,40 @@ namespace FEM2A {
 
     vec2 ShapeFunctions::evaluate_grad( int i, vertex x_r ) const
     {
-        std::cout << "[ShapeFunctions] evaluate gradient shape function " << i << '\n';
         // quel intérêt d'utiliser le type vec2 plutot que la structure vertex, dans DenseMatrix ?
-        // le gradient de phi dans l'espace réel (g) est le gradient de phi^ dans l'espace de  	référence (g_ref), multiplié par la matrice jacobienne            
+        // le gradient de phi dans l'espace réel (g) est le gradient de phi^ dans l'espace de 
+        // référence (g_ref), multiplié par la matrice jacobienne, et comme ordre = 1, 
+        // vertex x_r n'est pas utilisé         
+        
         vec2 g;
-        vec2 g_ref;
-        DenseMatrix J = jacobian_matrix( x_r );
-        // PB : jacobian_matrix est une méthode de ElementMaillage, donc on doit introduire un mapping !, mais aucun n'est passé en argument : comment savoir quels paramètres choisir ?
 
         if ( dim_ == 1 ) {
             switch (i) {
             	case 0 :
-            	    g_ref.x = -1 ;
-            	    g_ref.y = 0 ;
-            	    g = J.mult_2x2_2(g_ref);
+            	    g.x = -1 ;
+            	    g.y = 0 ; 
+            	    break; // le break est dit optionnel dans la doc mais si on ne le fait pas, renvoie le 2e cas à chaque fois
+            	               	 
                 case 1 :
-                    g_ref.x = 1 ;
-            	    g_ref.y = 0 ;
-            	    g = J.mult_2x2_2(g_ref);
+                    g.x = 1 ;
+            	    g.y = 0 ;
+            	    break;
             }
         }
         else {
             switch (i) {
                 case 0 :
-                    g_ref.x = -1 ;
-            	    g_ref.y = -1 ;
-            	    g = J.mult_2x2_2(g_ref);
+                    g.x = -1 ;
+            	    g.y = -1 ;
+            	    break;
                 case 1 :
-                    g_ref.x = 1 ;
-            	    g_ref.y = 0 ;
-            	    g = J.mult_2x2_2(g_ref);
+                    g.x = 1 ;
+            	    g.y = 0 ;
+            	    break;
                 case 2 :
-                    g_ref.x = 0 ;
-            	    g_ref.y = 1 ;
-            	    g = J.mult_2x2_2(g_ref);
+                    g.x = 0 ;
+            	    g.y = 1 ;
+            	    break;
             }
         }
         
@@ -321,9 +306,39 @@ namespace FEM2A {
         DenseMatrix& Ke )
     {
         std::cout << "compute elementary matrix" << '\n';
-        // TODO (utiliser les méthodes de la classe DenseMatrix; 
         // double (*coefficient)(vertex) est un pointeur de fonction : help.md dans la doc
-        //pour un produit scalaire avec des vecteurs : dot (.,.)
+        // pour un produit scalaire avec des vecteurs : dot (.,.)
+        
+        // taille de Ke = nb pts interp * // = nb phi^ func d'interp * //
+        // = 3*3 = nb vertices (sommets du triangle) 
+        // = noeuds du triangle ici, mais pas le cas si on utilisait des fonctions non 
+        // linéaires, i.e. ordre != 1 
+        // taille de K = nb points interp globale * // = nb points de maillage ici
+        
+        // points de gauss = points de la quadrature, sur lesquels on fait la somme pour Ke
+        
+        Ke.set_size(reference_functions.nb_functions(), reference_functions.nb_functions());
+        for ( int i = 0; i < reference_functions.nb_functions(); i++ ) {
+            for ( int j = 0; j < reference_functions.nb_functions(); j++) {
+                Ke.set(i, j, 0.);
+                for (int q = 0; q < quadrature.nb_points() ; q++) {
+                    vertex ptgauss_q = quadrature.point(q);           
+                    DenseMatrix Je = elt_mapping.jacobian_matrix( ptgauss_q );
+                    DenseMatrix Je_invT = Je.invert_2x2().transpose();     
+                    //std::cout << "Je = " << std::endl;            
+                    //Je.print();
+                    vec2 g_i = reference_functions.evaluate_grad( i, ptgauss_q );
+                    vec2 g_j = reference_functions.evaluate_grad( j, ptgauss_q );
+                    Ke.add(i, j, quadrature.weight(q)
+                                 * coefficient ( elt_mapping.transform( ptgauss_q ) )
+                                 * dot( Je_invT.mult_2x2_2(g_i), Je_invT.mult_2x2_2(g_j) )
+                                 * elt_mapping.jacobian( ptgauss_q ) );  
+                       
+                    std::cout << "ajout à Ke; i = " << i << "; j = " << j << std::
+                    endl;                         
+                }
+            }
+        }
     }
 
     void local_to_global_matrix(
@@ -333,7 +348,14 @@ namespace FEM2A {
         SparseMatrix& K )
     {
         std::cout << "Ke -> K" << '\n';
-        // TODO
+        for ( int i = 0; i < Ke.height(); i++ ) {
+            for ( int j = 0; j < Ke.width(); j++ ) {
+                //std::cout << "i =  " << i << "; j = " << j << std::endl; 
+                K.add( M.get_triangle_vertex_index(t, i), 
+                       M.get_triangle_vertex_index(t, j), 
+                       Ke.get(i, j) );
+            }
+        }
     }
 
     void assemble_elementary_vector(
@@ -344,7 +366,20 @@ namespace FEM2A {
         std::vector< double >& Fe )
     {
         std::cout << "compute elementary vector (source term)" << '\n';
-        // TODO
+        /*Fe.set_size(reference_functions.nb_functions());
+        for ( int i = 0; i < reference_functions.nb_functions(); i++ ) {
+            Fe remplie de 0;
+            for (int q = 0; q < quadrature.nb_points() ; q++) {
+                vertex ptgauss_q = quadrature.point(q);
+                Fe[i] += quadrature.weight(q)
+                        * coefficient ( elt_mapping.transform( ptgauss_q ) )
+                        * terme source h
+                        * elt_mapping.jacobian( ptgauss_q ) );  
+               
+                std::cout << "ajout à Ke; i = " << i << "; j = " << j << std::
+            endl;                         
+    }
+        }*/
     }
 
     void assemble_elementary_neumann_vector(
@@ -377,7 +412,20 @@ namespace FEM2A {
         std::vector< double >& F )
     {
         std::cout << "apply dirichlet boundary conditions" << '\n';
-        // TODO
+        double penalty_coefficient = 10000;
+        // pour chaque bord, 
+        for ( int edge = 0; edge < M.nb_edges(); edge++ ) {
+            int edge_attribute = M.get_edge_attribute(edge); 
+            if ( attribute_is_dirichlet[edge_attribute] ) {
+                // pour chaque noeud du bord, 
+                for ( int v = 0; v < 2; v++) {
+                    //on applique dirichlet :
+                    int vertex_index = M.get_edge_vertex_index(edge, v); // récupérer l'indice global
+                    K.add( vertex_index, vertex_index, penalty_coefficient );
+                    F[vertex_index] += penalty_coefficient* values[vertex_index];
+                }
+            }
+        }
     }
 
     void solve_poisson_problem(

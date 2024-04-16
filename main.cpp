@@ -36,7 +36,9 @@ void run_tests()
     const bool t_transf = false;
     const bool t_jac = false;
     const bool t_detjac = false;
-    const bool t_shapef = true;
+    const bool t_shapef = false;
+    const bool t_K = false;
+    const bool t_applydir = true;
 
     if( t_opennl ) test_opennl();
     if( t_lmesh ) Tests::test_load_mesh();
@@ -47,6 +49,9 @@ void run_tests()
     if( t_jac ) Tests::test_jacobian_matrix();
     if( t_detjac ) Tests::test_det_jacobian();
     if( t_shapef ) Tests::test_shape_functions();
+    if( t_K ) Tests::test_K();
+    if( t_applydir ) Tests::test_apply_dirichlet_boundary_conditions();
+    
 }
 
 void run_simu()
