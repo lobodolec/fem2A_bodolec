@@ -305,7 +305,6 @@ namespace FEM2A {
         double (*coefficient)(vertex),
         DenseMatrix& Ke )
     {
-        std::cout << "compute elementary matrix" << '\n';
         // double (*coefficient)(vertex) est un pointeur de fonction : help.md dans la doc
         // pour un produit scalaire avec des vecteurs : dot (.,.)
         
@@ -325,17 +324,12 @@ namespace FEM2A {
                     vertex ptgauss_q = quadrature.point(q);           
                     DenseMatrix Je = elt_mapping.jacobian_matrix( ptgauss_q );
                     DenseMatrix Je_invT = Je.invert_2x2().transpose();     
-                    //std::cout << "Je = " << std::endl;            
-                    //Je.print();
                     vec2 g_i = reference_functions.evaluate_grad( i, ptgauss_q );
                     vec2 g_j = reference_functions.evaluate_grad( j, ptgauss_q );
                     Ke.add(i, j, quadrature.weight(q)
                                  * coefficient ( elt_mapping.transform( ptgauss_q ) )
                                  * dot( Je_invT.mult_2x2_2(g_i), Je_invT.mult_2x2_2(g_j) )
-                                 * elt_mapping.jacobian( ptgauss_q ) );  
-                       
-                    std::cout << "ajout à Ke; i = " << i << "; j = " << j << std::
-                    endl;                         
+                                 * elt_mapping.jacobian( ptgauss_q ) );                         
                 }
             }
         }
@@ -347,11 +341,11 @@ namespace FEM2A {
         const DenseMatrix& Ke,
         SparseMatrix& K )
     {
-        std::cout << "Ke -> K" << '\n';
         for ( int i = 0; i < Ke.height(); i++ ) {
+            int ligne = M.get_triangle_vertex_index(t, i);
             for ( int j = 0; j < Ke.width(); j++ ) {
-                //std::cout << "i =  " << i << "; j = " << j << std::endl; 
-                K.add( M.get_triangle_vertex_index(t, i), 
+                K.add( ligne,cd ..
+                
                        M.get_triangle_vertex_index(t, j), 
                        Ke.get(i, j) );
             }
@@ -412,17 +406,21 @@ namespace FEM2A {
         std::vector< double >& F )
     {
         std::cout << "apply dirichlet boundary conditions" << '\n';
+        std::vector< bool > processed_vertices(values.size(), false);
         double penalty_coefficient = 10000;
         // pour chaque bord, 
         for ( int edge = 0; edge < M.nb_edges(); edge++ ) {
-            int edge_attribute = M.get_edge_attribute(edge); 
-            if ( attribute_is_dirichlet[edge_attribute] ) {
+            int edge_attr = M.get_edge_attribute(edge); 
+            if ( attribute_is_dirichlet[edge_attr] ) {
                 // pour chaque noeud du bord, 
-                for ( int v = 0; v < 2; v++) {
+                for ( int vert = 0; vert < 2; vert++) {
                     //on applique dirichlet :
-                    int vertex_index = M.get_edge_vertex_index(edge, v); // récupérer l'indice global
-                    K.add( vertex_index, vertex_index, penalty_coefficient );
-                    F[vertex_index] += penalty_coefficient* values[vertex_index];
+                    int vertex_index = M.get_edge_vertex_index(edge, vert); /* récupère l'indice global */
+                    if( !processed_vertices[vertex_index] ) { /* pas traiter deux fois le même point pour deux segments adjacents*/
+                        processed_vertices[vertex_index] = true;
+                        K.add(vertex_index, vertex_index, penalty_coefficient);
+                        F[vertex_index] += penalty_coefficient*values[vertex_index];
+                    }
                 }
             }
         }

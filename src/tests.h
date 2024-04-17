@@ -132,7 +132,7 @@ namespace FEM2A {
             return true;
         }
         
-        double permeabilite ( vertex x_r )
+        double diffusion ( vertex x_r )
         {
             double k = 1;
             return k;
@@ -147,7 +147,7 @@ namespace FEM2A {
             Quadrature quad = Quadrature::get_quadrature(2, false); // tester avec 0 et 2
             
             DenseMatrix Ke;
-            assemble_elementary_matrix( map, ref_func, quad, permeabilite, Ke );
+            assemble_elementary_matrix( map, ref_func, quad, diffusion, Ke );
             Ke.print(); 
             
             SparseMatrix K = SparseMatrix( mesh.nb_vertices() );
@@ -155,19 +155,6 @@ namespace FEM2A {
             K.print();
             
             return true;
-        }
-        
-        bool test_apply_dirichlet_boundary_conditions()
-        {
-            Mesh mesh;
-            mesh.load("data/square.mesh");
-            std::vector< bool >& attribute_is_dirichlet const
-            attr_is_dir
-            apply_dirichlet_boundary_conditions(mesh, 
-        const std::vector< bool >& attribute_is_dirichlet, /* size: nb of attributes */
-        const std::vector< double >& values, /* size: nb of DOFs */
-        SparseMatrix& K,
-        std::vector< double >& F 
         }
         
     }
