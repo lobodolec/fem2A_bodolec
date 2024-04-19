@@ -38,6 +38,7 @@ void run_tests()
     const bool t_detjac = false;
     const bool t_shapef = false;
     const bool t_K = false;
+    const bool t_F = true;
 
     if( t_opennl ) test_opennl();
     if( t_lmesh ) Tests::test_load_mesh();
@@ -49,6 +50,7 @@ void run_tests()
     if( t_detjac ) Tests::test_det_jacobian();
     if( t_shapef ) Tests::test_shape_functions();
     if( t_K ) Tests::test_K();
+    if( t_F ) Tests::test_F();
     
 }
 

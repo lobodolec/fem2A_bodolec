@@ -71,7 +71,7 @@ namespace FEM2A {
             std::vector< double > u(mesh.nb_vertices());
             solve(K, F, u);
             
-            // enregistre :
+            // enregistrement :
             std::string export_name = "pure_dirichlet_square";
             mesh.save(export_name + ".mesh"); /* le maillage avec les nouveaux attributs */
             save_solution(u, export_name + ".bb"); /* la solution du système */

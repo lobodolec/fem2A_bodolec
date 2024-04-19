@@ -77,12 +77,12 @@ namespace FEM2A {
         {	
             Mesh mesh;
             mesh.load("data/square.mesh");
-            ElementMapping map = ElementMapping(mesh, false, 4);
+            ElementMapping elt_map = ElementMapping(mesh, false, 4);
             vertex point ;
             point.x = 0.2;
             point.y = 0.4;
-            std::cout << map.transform(point).x << " " 
-            << map.transform(point).y << std::endl;
+            std::cout << elt_map.transform(point).x << " " 
+            << elt_map.transform(point).y << std::endl;
             return true;
         }
         
@@ -90,11 +90,11 @@ namespace FEM2A {
         {
             Mesh mesh;
             mesh.load("data/square.mesh");
-            ElementMapping map = ElementMapping(mesh, false, 4);
+            ElementMapping elt_map = ElementMapping(mesh, false, 4);
             vertex point ;
             point.x = 0.2;
             point.y = 0.4;
-            DenseMatrix mat = map.jacobian_matrix(point);
+            DenseMatrix mat = elt_map.jacobian_matrix(point);
             mat.print();
             return true;
         }
@@ -103,11 +103,11 @@ namespace FEM2A {
         {
             Mesh mesh;
             mesh.load("data/square.mesh");
-            ElementMapping map = ElementMapping(mesh, true, 4);
+            ElementMapping elt_map = ElementMapping(mesh, true, 4);
             vertex point ;
             point.x = 0.2;
             point.y = 0.4;
-            std::cout << map.jacobian(point) << std::endl;
+            std::cout << elt_map.jacobian(point) << std::endl;
             return true;
         }
         
@@ -132,24 +132,25 @@ namespace FEM2A {
             return true;
         }
         
-        double diffusion ( vertex x_r )
+        double diffusion_1 ( vertex v )
         {
-            double k = 1;
-            return k;
+            return 1;
         }
         
         bool test_K()
         {
             Mesh mesh;
             mesh.load("data/square.mesh");
-            ElementMapping map = ElementMapping(mesh, false, 4);
+            ElementMapping elt_map = ElementMapping(mesh, false, 4);
             ShapeFunctions ref_func(2, 1);
             Quadrature quad = Quadrature::get_quadrature(2, false); // tester avec 0 et 2
             
+            // test on Ke
             DenseMatrix Ke;
-            assemble_elementary_matrix( map, ref_func, quad, diffusion, Ke );
+            assemble_elementary_matrix( elt_map, ref_func, quad, diffusion_1, Ke );
             Ke.print(); 
             
+            // test on K            
             SparseMatrix K = SparseMatrix( mesh.nb_vertices() );
             local_to_global_matrix(mesh, 4, Ke, K);
             K.print();
@@ -157,5 +158,44 @@ namespace FEM2A {
             return true;
         }
         
+        double h_1 ( vertex v )
+        {
+            return 1;
+        }
+        
+        bool test_F()
+        {
+            Mesh mesh;
+            mesh.load("data/square.mesh");
+            ElementMapping elt_map = ElementMapping(mesh, false, 4);
+            ShapeFunctions ref_func(2, 1);
+            Quadrature quad = Quadrature::get_quadrature(2, false); // tester avec 0 et 2
+            
+            //test on Fe
+            std::vector< double > Fe;
+            assemble_elementary_vector( elt_map, ref_func, quad, h_1, Fe );
+            std::cout << "Fe = \n [" << std::endl;
+            for (int i = 0; i < Fe.size(); i++) {
+                std::cout << Fe[i] << std::endl;
+            }
+            std::cout << "]"<< std::endl;
+            
+            //test on Fe for Neumann
+            /*std::vector< double > Fe_neumann;
+            assemble_elementary_neumann_vector( elt_mapp_1D, ref_func_1D, quad_1D, h_neumann_1, Fe_neumann );
+            assemble_elementary_vector( elt_map, ref_func, quad, h_1, Fe_neumann );
+            std::cout << "Fe = \n [" << std::endl;
+            for (int i = 0; i < Fe_neumann.size(); i++) {
+                std::cout << Fe_neumann[i] << std::endl;
+            }
+            std::cout << "]"<< std::endl;*/
+            
+            // test on F
+            std::vector< double > F;
+            local_to_global_vector(mesh, 4, Ke, K);
+            K.print();
+            
+            return true;
+        }
     }
 }

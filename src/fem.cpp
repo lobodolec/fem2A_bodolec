@@ -341,13 +341,12 @@ namespace FEM2A {
         const DenseMatrix& Ke,
         SparseMatrix& K )
     {
-        for ( int i = 0; i < Ke.height(); i++ ) {
-            int ligne = M.get_triangle_vertex_index(t, i);
-            for ( int j = 0; j < Ke.width(); j++ ) {
-                K.add( ligne,cd ..
-                
-                       M.get_triangle_vertex_index(t, j), 
-                       Ke.get(i, j) );
+        for ( int line = 0; line < Ke.height(); line++ ) {
+            int i = M.get_triangle_vertex_index(t, line);
+            for ( int column = 0; column < Ke.width(); column ++ ) {
+                K.add( i, 
+                       M.get_triangle_vertex_index(t, column), 
+                       Ke.get(line, column) );
             }
         }
     }
@@ -360,20 +359,19 @@ namespace FEM2A {
         std::vector< double >& Fe )
     {
         std::cout << "compute elementary vector (source term)" << '\n';
-        /*Fe.set_size(reference_functions.nb_functions());
-        for ( int i = 0; i < reference_functions.nb_functions(); i++ ) {
-            Fe remplie de 0;
+        // Fe.resize(reference_functions.nb_functions()) et ensuite remplir de 0 au début du for(i); OU ALORS un push_back avec Fe de taille 0 au départ ? quel problème cette allocation peut poser dans l'utilisation de la mémoire ?
+        for (int i = 0; i < reference_functions.nb_functions(); i++) {
+            Fe.push_back(0);
+            std::cout << "ajout à Fe" << std::endl;
             for (int q = 0; q < quadrature.nb_points() ; q++) {
-                vertex ptgauss_q = quadrature.point(q);
+                vertex ptgauss_q = quadrature.point(q);           
                 Fe[i] += quadrature.weight(q)
-                        * coefficient ( elt_mapping.transform( ptgauss_q ) )
-                        * terme source h
-                        * elt_mapping.jacobian( ptgauss_q ) );  
-               
-                std::cout << "ajout à Ke; i = " << i << "; j = " << j << std::
-            endl;                         
-    }
-        }*/
+                         * reference_functions.evaluate( i, ptgauss_q )
+                         * source( ptgauss_q )
+                         * elt_mapping.jacobian( ptgauss_q );  
+                std::cout << "calcul somme" << std::endl;
+            }
+        }
     }
 
     void assemble_elementary_neumann_vector(
@@ -384,7 +382,10 @@ namespace FEM2A {
         std::vector< double >& Fe )
     {
         std::cout << "compute elementary vector (neumann condition)" << '\n';
-        // TODO
+        // les conditions de Neumann correspondent à un flux de chaleur imposé sur les frontières du domaine.
+        // En 2D, ces conditions s'appliquent sur des segments. Il nous faut donc définir un segment de référence accompagné de fonctions de forme et d'une loi d'intégration.
+        // comme c'est exactement la même fonction, on va l'appeler en appelant *neumann dans *source :
+        assemble_elementary_vector( elt_mapping_1D, reference_functions_1D, quadrature_1D, neumann, Fe );
     }
 
     void local_to_global_vector(
@@ -394,8 +395,12 @@ namespace FEM2A {
         std::vector< double >& Fe,
         std::vector< double >& F )
     {
-        std::cout << "Fe -> F" << '\n';
-        // TODO
+        /*std::cout << "Fe -> F" << '\n';
+        for ( int i = 0; i < F.size(); i++ ) {
+            int index = ...
+            F.push_back(Fe[index]);
+            }*/
+        }
     }
 
     void apply_dirichlet_boundary_conditions(
