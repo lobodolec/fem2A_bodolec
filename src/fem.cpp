@@ -362,14 +362,12 @@ namespace FEM2A {
         // Fe.resize(reference_functions.nb_functions()) et ensuite remplir de 0 au début du for(i); OU ALORS un push_back avec Fe de taille 0 au départ ? quel problème cette allocation peut poser dans l'utilisation de la mémoire ?
         for (int i = 0; i < reference_functions.nb_functions(); i++) {
             Fe.push_back(0);
-            std::cout << "ajout à Fe" << std::endl;
             for (int q = 0; q < quadrature.nb_points() ; q++) {
                 vertex ptgauss_q = quadrature.point(q);           
                 Fe[i] += quadrature.weight(q)
                          * reference_functions.evaluate( i, ptgauss_q )
                          * source( ptgauss_q )
-                         * elt_mapping.jacobian( ptgauss_q );  
-                std::cout << "calcul somme" << std::endl;
+                         * elt_mapping.jacobian( ptgauss_q );
             }
         }
     }
@@ -395,12 +393,21 @@ namespace FEM2A {
         std::vector< double >& Fe,
         std::vector< double >& F )
     {
-        /*std::cout << "Fe -> F" << '\n';
-        for ( int i = 0; i < F.size(); i++ ) {
-            int index = ...
-            F.push_back(Fe[index]);
-            }*/
+        std::cout << "Fe -> F" << '\n';
+        if ( border ) { 
+            for ( int t = 0; t < Fe.size(); t++ ) { 
+                int index = M.get_edge_vertex_index(i, t);
+                F[index] = Fe[t];
+            }      
         }
+        else {
+            for ( int t = 0; t < Fe.size(); t++ ) {
+                int index = M.get_triangle_vertex_index(i, t);
+                F[index] = Fe[t];
+            }
+     
+        }
+         
     }
 
     void apply_dirichlet_boundary_conditions(
@@ -421,7 +428,7 @@ namespace FEM2A {
                 for ( int vert = 0; vert < 2; vert++) {
                     //on applique dirichlet :
                     int vertex_index = M.get_edge_vertex_index(edge, vert); /* récupère l'indice global */
-                    if( !processed_vertices[vertex_index] ) { /* pas traiter deux fois le même point pour deux segments adjacents*/
+                    if( !processed_vertices[vertex_index] ) { /* ne pas traiter deux fois le même point pour deux segments adjacents*/
                         processed_vertices[vertex_index] = true;
                         K.add(vertex_index, vertex_index, penalty_coefficient);
                         F[vertex_index] += penalty_coefficient*values[vertex_index];

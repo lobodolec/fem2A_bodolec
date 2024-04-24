@@ -167,11 +167,11 @@ namespace FEM2A {
         {
             Mesh mesh;
             mesh.load("data/square.mesh");
-            ElementMapping elt_map = ElementMapping(mesh, false, 4);
-            ShapeFunctions ref_func(2, 1);
-            Quadrature quad = Quadrature::get_quadrature(2, false); // tester avec 0 et 2
             
             //test on Fe
+            ElementMapping elt_map = ElementMapping(mesh, false, 4); // tester avec 0, 1, 65
+            ShapeFunctions ref_func(2, 1);
+            Quadrature quad = Quadrature::get_quadrature(2, false); // tester avec 0 et 2
             std::vector< double > Fe;
             assemble_elementary_vector( elt_map, ref_func, quad, h_1, Fe );
             std::cout << "Fe = \n [" << std::endl;
@@ -180,9 +180,12 @@ namespace FEM2A {
             }
             std::cout << "]"<< std::endl;
             
-            //test on Fe for Neumann
-            /*std::vector< double > Fe_neumann;
-            assemble_elementary_neumann_vector( elt_mapp_1D, ref_func_1D, quad_1D, h_neumann_1, Fe_neumann );
+            //test on Fe for Neumann            
+            /*ElementMapping elt_map_1D = ElementMapping(mesh, true, 4);
+            ShapeFunctions ref_func_1D(1, 1);
+            Quadrature quad_1D = Quadrature::get_quadrature(2, true); // tester avec 0 et 2
+            std::vector< double > Fe_neumann;
+            assemble_elementary_neumann_vector( elt_map_1D, ref_func_1D, quad_1D, h_1, Fe_neumann );
             assemble_elementary_vector( elt_map, ref_func, quad, h_1, Fe_neumann );
             std::cout << "Fe = \n [" << std::endl;
             for (int i = 0; i < Fe_neumann.size(); i++) {
@@ -191,9 +194,8 @@ namespace FEM2A {
             std::cout << "]"<< std::endl;*/
             
             // test on F
-            std::vector< double > F;
-            local_to_global_vector(mesh, 4, Ke, K);
-            K.print();
+            std::vector< double > F (mesh.nb_vertices(), 0); 
+            local_to_global_vector(mesh, false, 4, Fe, F);
             
             return true;
         }
