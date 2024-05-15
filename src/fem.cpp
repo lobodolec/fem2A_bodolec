@@ -135,11 +135,6 @@ namespace FEM2A {
         if ( border ) std::cout << "(border)";
         std::cout << '\n';
 
-        /* on remplit les attributs (constructeur !) avec les indexes locaux+globaux puis les coord*/
-        // trouver le nombre de points
-        // reshape vertices_ pour les contenir
-        // le remplir avec les méthodes de mesh : avoir les indices locaux(calcul) et globaux(i n'est pas l'indice GLOBAL mais l'indice de l'élément entier !)
-        
         if ( border ) {
             for (int i_local = 0; i_local<2; ++i_local) {
                 vertices_.push_back(M.get_edge_vertex(i, i_local));
@@ -154,8 +149,6 @@ namespace FEM2A {
 
     vertex ElementMapping::transform( vertex x_r ) const
     {        
-        /* les coordonnées de références sont dans l'attribut vertices_
-        on applique les fonctions phi^ */
         vertex r ;
         if ( border_ ) {
             r.x = (1-x_r.x) * vertices_[0].x + x_r.x * vertices_[1].x;
@@ -209,7 +202,6 @@ namespace FEM2A {
     ShapeFunctions::ShapeFunctions( int dim, int order )
         : dim_( dim ), order_( order )
     {
-        // (elle concerne les fonctions d'interpolation!) 
         bool shape_func_constr = true;
         if ( dim != 1 && dim != 2 ) {
             std::cout << "ShapeFunctions is only implemented in 1D or 2D" << std::endl;
@@ -229,8 +221,6 @@ namespace FEM2A {
 
     double ShapeFunctions::evaluate( int i, vertex x_r ) const
     {
-        // qu'apporte un switch case par rapport à un if ici ? 
-        // juste plus simple à lire et à écrire
         if ( dim_ == 1 ) {
             switch (i) {
             	case 0 :
@@ -255,11 +245,6 @@ namespace FEM2A {
 
     vec2 ShapeFunctions::evaluate_grad( int i, vertex x_r ) const
     {
-        // quel intérêt d'utiliser le type vec2 plutot que la structure vertex, dans DenseMatrix ?
-        // le gradient de phi dans l'espace réel (g) est le gradient de phi^ dans l'espace de 
-        // référence (g_ref), multiplié par la matrice jacobienne, et comme ordre = 1, 
-        // vertex x_r n'est pas utilisé         
-        
         vec2 g;
 
         if ( dim_ == 1 ) {
@@ -267,7 +252,7 @@ namespace FEM2A {
             	case 0 :
             	    g.x = -1 ;
             	    g.y = 0 ; 
-            	    break; // le break est dit optionnel dans la doc mais si on ne le fait pas, renvoie le 2e cas à chaque fois
+            	    break;
             	               	 
                 case 1 :
                     g.x = 1 ;
@@ -304,18 +289,7 @@ namespace FEM2A {
         const Quadrature& quadrature,
         double (*coefficient)(vertex),
         DenseMatrix& Ke )
-    {
-        // double (*coefficient)(vertex) est un pointeur de fonction : help.md dans la doc
-        // pour un produit scalaire avec des vecteurs : dot (.,.)
-        
-        // taille de Ke = nb pts interp * // = nb phi^ func d'interp * //
-        // = 3*3 = nb vertices (sommets du triangle) 
-        // = noeuds du triangle ici, mais pas le cas si on utilisait des fonctions non 
-        // linéaires, i.e. ordre != 1 
-        // taille de K = nb points interp globale * // = nb points de maillage ici
-        
-        // points de gauss = points de la quadrature, sur lesquels on fait la somme pour Ke
-        
+    {        
         Ke.set_size(reference_functions.nb_functions(), reference_functions.nb_functions());
         for ( int i = 0; i < reference_functions.nb_functions(); i++ ) {
             for ( int j = 0; j < reference_functions.nb_functions(); j++) {
@@ -358,8 +332,6 @@ namespace FEM2A {
         double (*source)(vertex),
         std::vector< double >& Fe )
     {
-        std::cout << "compute elementary vector (source term)" << '\n';
-        // Fe.resize(reference_functions.nb_functions()) et ensuite remplir de 0 au début du for(i); OU ALORS un push_back avec Fe de taille 0 au départ ? quel problème cette allocation peut poser dans l'utilisation de la mémoire ?
         for (int i = 0; i < reference_functions.nb_functions(); i++) {
             Fe.push_back(0);
             for (int q = 0; q < quadrature.nb_points() ; q++) {
@@ -379,11 +351,7 @@ namespace FEM2A {
         double (*neumann)(vertex),
         std::vector< double >& Fe )
     {
-        std::cout << "compute elementary vector (neumann condition)" << '\n';
-        // les conditions de Neumann correspondent à un flux de chaleur imposé sur les frontières du domaine.
-        // En 2D, ces conditions s'appliquent sur des segments. Il nous faut donc définir un segment de référence accompagné de fonctions de forme et d'une loi d'intégration.
-        // comme c'est exactement la même fonction, on va l'appeler en appelant *neumann dans *source :
-        assemble_elementary_vector( elt_mapping_1D, reference_functions_1D, quadrature_1D, neumann, Fe );
+        // assemble_elementary_vector( elt_mapping_1D, reference_functions_1D, quadrature_1D, neumann, Fe );
     }
 
     void local_to_global_vector(
@@ -393,7 +361,6 @@ namespace FEM2A {
         std::vector< double >& Fe,
         std::vector< double >& F )
     {
-        std::cout << "Fe -> F" << '\n';
         if ( border ) { 
             for ( int t = 0; t < Fe.size(); t++ ) { 
                 int index = M.get_edge_vertex_index(i, t);
@@ -412,23 +379,19 @@ namespace FEM2A {
 
     void apply_dirichlet_boundary_conditions(
         const Mesh& M,
-        const std::vector< bool >& attribute_is_dirichlet, /* size: nb of attributes */
-        const std::vector< double >& values, /* size: nb of DOFs */
+        const std::vector< bool >& attribute_is_dirichlet, 
+        const std::vector< double >& values, 
         SparseMatrix& K,
         std::vector< double >& F )
     {
-        std::cout << "apply dirichlet boundary conditions" << '\n';
         std::vector< bool > processed_vertices(values.size(), false);
-        double penalty_coefficient = 10000;
-        // pour chaque bord, 
+        double penalty_coefficient = 10000; 
         for ( int edge = 0; edge < M.nb_edges(); edge++ ) {
             int edge_attr = M.get_edge_attribute(edge); 
             if ( attribute_is_dirichlet[edge_attr] ) {
-                // pour chaque noeud du bord, 
                 for ( int vert = 0; vert < 2; vert++) {
-                    //on applique dirichlet :
-                    int vertex_index = M.get_edge_vertex_index(edge, vert); /* récupère l'indice global */
-                    if( !processed_vertices[vertex_index] ) { /* ne pas traiter deux fois le même point pour deux segments adjacents*/
+                    int vertex_index = M.get_edge_vertex_index(edge, vert); 
+                    if( !processed_vertices[vertex_index] ) { 
                         processed_vertices[vertex_index] = true;
                         K.add(vertex_index, vertex_index, penalty_coefficient);
                         F[vertex_index] += penalty_coefficient*values[vertex_index];

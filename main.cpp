@@ -37,19 +37,23 @@ void run_tests()
     const bool t_jac = false;
     const bool t_detjac = false;
     const bool t_shapef = false;
+    const bool t_Ke = false;
     const bool t_K = false;
+    const bool t_Fe = false;
     const bool t_F = true;
 
     if( t_opennl ) test_opennl();
     if( t_lmesh ) Tests::test_load_mesh();
     if( t_io ) Tests::test_load_save_mesh();
-    if( t_quad ) Tests::test_quadrature( 0, false );
-    if( t_eltmap ) Tests::test_element_mapping( false, 4 );
+    if( t_quad ) Tests::test_quadrature();
+    if( t_eltmap ) Tests::test_element_mapping();
     if( t_transf ) Tests::test_transform();
     if( t_jac ) Tests::test_jacobian_matrix();
     if( t_detjac ) Tests::test_det_jacobian();
     if( t_shapef ) Tests::test_shape_functions();
+    if( t_Ke ) Tests::test_K();
     if( t_K ) Tests::test_K();
+    if( t_Fe ) Tests::test_Fe();
     if( t_F ) Tests::test_F();
     
 }
@@ -58,7 +62,11 @@ void run_simu()
 {
 
     const bool simu_pure_dirichlet = false;
-    const bool simu_dirichlet_with_source_term = true;
+    const bool simu_dirichlet_with_source_term = false;
+    const bool sinus_bump_pb = false;
+    const bool solexact_sin_pb = false;
+    const bool diff_sinexact = true;
+    
 
     const bool verbose = flag_is_used( "-v", arguments )
         || flag_is_used( "--verbose", arguments );
@@ -68,7 +76,19 @@ void run_simu()
     }
     
     if( simu_dirichlet_with_source_term ) {
-        Simu::dirichlet_source_term_pb("data/square_fine.mesh", verbose);
+        Simu::dirichlet_source_term_pb("data/square.mesh", verbose);
+    }
+    
+    if( sinus_bump_pb ) {
+        Simu::sinus_bump_pb("data/square.mesh", verbose);
+    }
+    
+    if( solexact_sin_pb ) {
+        Simu::solexact_sin_pb("data/square.mesh", verbose);
+    }
+    
+    if( diff_sinexact ) {
+        Simu::diff_sinexact("data/square_fine.mesh", verbose);
     }
 }
 

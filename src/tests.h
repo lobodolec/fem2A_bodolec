@@ -51,25 +51,24 @@ namespace FEM2A {
             return true;
         }
         
-        bool test_quadrature(int ordre, bool bord)
+        bool test_quadrature()
         {
             Quadrature quad;
-            quad = Quadrature::get_quadrature(ordre, bord);
-            std::cout << quad.nb_points() << std::endl;
-            double weight_sum = 0;
+            quad = Quadrature::get_quadrature(0, false);
+            double result = 0;
             for (int i = 0; i < quad.nb_points(); i++) {
-                std::cout << quad.weight(i) << std::endl;
-            	weight_sum =+ quad.weight(i);
+            	result =+ quad.weight(i);
             }
-            std::cout << "somme des poids : " << weight_sum << std::endl;
+            std::cout << "somme des poids : " << result << std::endl;
             return true;
         }
 
-        bool test_element_mapping(bool border, int i)
+        bool test_element_mapping()
         {
             Mesh mesh;
             mesh.load("data/square.mesh");
-            ElementMapping(mesh, border, i);
+            ElementMapping elt_map_triangle = ElementMapping(mesh, false, 4);
+            ElementMapping elt_map_edge = ElementMapping(mesh, true, 4);
             return true;
         }
         
@@ -103,7 +102,7 @@ namespace FEM2A {
         {
             Mesh mesh;
             mesh.load("data/square.mesh");
-            ElementMapping elt_map = ElementMapping(mesh, true, 4);
+            ElementMapping elt_map = ElementMapping(mesh, false, 4);
             vertex point ;
             point.x = 0.2;
             point.y = 0.4;
@@ -137,20 +136,31 @@ namespace FEM2A {
             return 1;
         }
         
+        bool test_Ke()
+        {
+            Mesh mesh;
+            mesh.load("data/square.mesh");
+            ElementMapping elt_map = ElementMapping(mesh, false, 4);
+            ShapeFunctions ref_func(2, 1);
+            Quadrature quad = Quadrature::get_quadrature(2, false);
+            
+            DenseMatrix Ke;
+            assemble_elementary_matrix( elt_map, ref_func, quad, diffusion_1, Ke );
+            Ke.print();
+            
+            return true;
+        }
+        
         bool test_K()
         {
             Mesh mesh;
             mesh.load("data/square.mesh");
             ElementMapping elt_map = ElementMapping(mesh, false, 4);
             ShapeFunctions ref_func(2, 1);
-            Quadrature quad = Quadrature::get_quadrature(2, false); // tester avec 0 et 2
-            
-            // test on Ke
+            Quadrature quad = Quadrature::get_quadrature(2, false);
             DenseMatrix Ke;
             assemble_elementary_matrix( elt_map, ref_func, quad, diffusion_1, Ke );
-            Ke.print(); 
-            
-            // test on K            
+                     
             SparseMatrix K = SparseMatrix( mesh.nb_vertices() );
             local_to_global_matrix(mesh, 4, Ke, K);
             K.print();
@@ -163,37 +173,38 @@ namespace FEM2A {
             return 1;
         }
         
+        bool test_Fe()
+        {
+            Mesh mesh;
+            mesh.load("data/square.mesh");
+            
+            ElementMapping elt_map = ElementMapping(mesh, false, 4);
+            ShapeFunctions ref_func(2, 1);
+            Quadrature quad = Quadrature::get_quadrature(2, false);
+            
+            std::vector< double > Fe;
+            assemble_elementary_vector( elt_map, ref_func, quad, h_1, Fe );
+            std::cout << "Fe = [" << std::endl;
+            for (int i = 0; i < Fe.size(); i++) {
+                std::cout << Fe[i] << std::endl;
+            }
+            std::cout << "]"<< std::endl;
+            
+            return true;
+        }
+        
         bool test_F()
         {
             Mesh mesh;
             mesh.load("data/square.mesh");
             
             //test on Fe
-            ElementMapping elt_map = ElementMapping(mesh, false, 4); // tester avec 0, 1, 65
+            ElementMapping elt_map = ElementMapping(mesh, false, 4);
             ShapeFunctions ref_func(2, 1);
-            Quadrature quad = Quadrature::get_quadrature(2, false); // tester avec 0 et 2
+            Quadrature quad = Quadrature::get_quadrature(2, false);
             std::vector< double > Fe;
             assemble_elementary_vector( elt_map, ref_func, quad, h_1, Fe );
-            std::cout << "Fe = \n [" << std::endl;
-            for (int i = 0; i < Fe.size(); i++) {
-                std::cout << Fe[i] << std::endl;
-            }
-            std::cout << "]"<< std::endl;
             
-            //test on Fe for Neumann            
-            /*ElementMapping elt_map_1D = ElementMapping(mesh, true, 4);
-            ShapeFunctions ref_func_1D(1, 1);
-            Quadrature quad_1D = Quadrature::get_quadrature(2, true); // tester avec 0 et 2
-            std::vector< double > Fe_neumann;
-            assemble_elementary_neumann_vector( elt_map_1D, ref_func_1D, quad_1D, h_1, Fe_neumann );
-            assemble_elementary_vector( elt_map, ref_func, quad, h_1, Fe_neumann );
-            std::cout << "Fe = \n [" << std::endl;
-            for (int i = 0; i < Fe_neumann.size(); i++) {
-                std::cout << Fe_neumann[i] << std::endl;
-            }
-            std::cout << "]"<< std::endl;*/
-            
-            // test on F
             std::vector< double > F (mesh.nb_vertices(), 0); 
             local_to_global_vector(mesh, false, 4, Fe, F);
             
